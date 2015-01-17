@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component:BasicWidget 
+	xmlns:fx="http://ns.adobe.com/mxml/2009" 
+	xmlns:s="library://ns.adobe.com/flex/spark" 
+	xmlns:mx="library://ns.adobe.com/flex/mx" 
+	xmlns:component="component.*"
+>
+	
+	<component:states>
+		<s:State name="default" />
+		<s:State name="authServerConfig"  stateGroups="authServerGroup" />
+		<s:State name="customCredentials" stateGroups="authServerGroup, customConfigGroup" />
+		<s:State name="customAccess"      stateGroups="authServerGroup, customConfigGroup, defaultCredentialsGroup" />
+		<s:State name="anonymousAccess"   stateGroups="authServerGroup, customConfigGroup, defaultCredentialsGroup" />
+	</component:states>
+	
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		
+		s|FormItem #labelDisplay {
+			text-align: right;
+		}
+	</fx:Style>
+	
+	<fx:Script>
+		<![CDATA[
+			/**
+			 * Mark whether view state is changed
+			 */
+			private var viewStateChanged:Boolean;
+			
+			/**
+			 * Use enterprise authentication server
+			 */
+			private var _useEnterpriseAuthServer:Boolean;
+			[Bindable]
+			private function get useEnterpriseAuthServer():Boolean {
+				return _useEnterpriseAuthServer;
+			}
+			private function set useEnterpriseAuthServer(value:Boolean):void {
+				if (_useEnterpriseAuthServer == value) {
+					return;
+				}
+				
+				_useEnterpriseAuthServer = value;
+				
+				viewStateChanged = true;
+				invalidateProperties();
+			}
+			
+			/**
+			 * Use custom configuration
+			 */
+			private var _useCustomConfiguration:Boolean;
+			[Bindable]
+			private function get useCustomConfiguration():Boolean {
+				return _useCustomConfiguration;
+			}
+			private function set useCustomConfiguration(value:Boolean):void {
+				if (_useCustomConfiguration == value) {
+					return;
+				}
+				
+				_useCustomConfiguration = value;
+				
+				viewStateChanged = true;
+				invalidateProperties();
+			}
+			
+			/**
+			 * Use default credentials
+			 */
+			private var _useDefaultCredentials:Boolean = true;
+			[Bindable]
+			private function get useDefaultCredentials():Boolean {
+				return _useDefaultCredentials;
+			}
+			private function set useDefaultCredentials(value:Boolean):void {
+				if (_useDefaultCredentials == value) {
+					return;
+				}
+				
+				_useDefaultCredentials = value;
+				
+				// Special case
+				if (!value) {
+					useAnonymousAccess = false;
+				}
+				
+				viewStateChanged = true;
+				invalidateProperties();
+			}
+			
+			/**
+			 * Use anonymous access
+			 */
+			private var _useAnonymousAccess:Boolean = true;
+			[Bindable]
+			private function get useAnonymousAccess():Boolean {
+				return _useAnonymousAccess;
+			}
+			private function set useAnonymousAccess(value:Boolean):void {
+				if (_useAnonymousAccess == value) {
+					return;
+				}
+				
+				_useAnonymousAccess = value;
+				
+				viewStateChanged = true;
+				invalidateProperties();
+			}
+			
+			// ------------------------------------------------------
+			//  Commit properties
+			// ------------------------------------------------------
+			
+			override protected function commitProperties():void {
+				super.commitProperties();
+				
+				if (viewStateChanged) {
+					updateViewState();
+					viewStateChanged = false;
+				}
+			}
+			
+			// ----------------------------------------
+			//  Update view state
+			// ----------------------------------------
+			
+			private function updateViewState():void {
+				if (!useEnterpriseAuthServer) {
+					currentState = "default";
+					return;
+				}
+				
+				if (!useCustomConfiguration) {
+					currentState = "authServerConfig";
+					return;
+				}
+				
+				if (useDefaultCredentials) {
+					currentState = useAnonymousAccess ? "anonymousAccess" : "customAccess";
+					return;
+				}
+				
+				currentState = "customCredentials";
+			}
+		]]>
+	</fx:Script>
+	
+	<s:Form width="100%" height="100%">
+		<s:FormItem label="Use an enterprise authentication server:">
+			<s:CheckBox selected="@{useEnterpriseAuthServer}"/>
+		</s:FormItem>
+		
+		<s:FormItem label="Domain name:" includeIn="authServerGroup">
+			<s:TextInput id="domainNameField" />
+		</s:FormItem>
+		
+		<s:FormItem label="IP:" includeIn="authServerGroup">
+			<s:TextInput id="ipField" />
+		</s:FormItem>
+		
+		<s:FormItem label="Use custom configuration:" includeIn="authServerGroup">
+			<s:CheckBox selected="@{useCustomConfiguration}"/>
+		</s:FormItem>
+		
+		<s:FormItem label="Use default credentials:" includeIn="customConfigGroup">
+			<s:CheckBox selected="@{useDefaultCredentials}"/>
+		</s:FormItem>
+		
+		<s:FormItem label="Anonymous access:" includeIn="defaultCredentialsGroup">
+			<s:CheckBox selected="@{useAnonymousAccess}"/>
+		</s:FormItem>
+		
+		<s:FormItem label="Bind DN:" includeIn="customAccess">
+			<s:TextInput id="bindDNField" />
+		</s:FormItem>
+		
+		<s:FormItem label="Password:" includeIn="customAccess">
+			<s:TextInput id="passwordField" displayAsPassword="true" />
+		</s:FormItem>
+		
+		<s:FormItem label="Bind DN pattern:" includeIn="customCredentials">
+			<s:TextInput id="bindDNPatternField" />
+		</s:FormItem>
+		
+		<s:FormItem label="User mapping attribute:" includeIn="customConfigGroup">
+			<s:TextInput id="userMappingAttr" />
+		</s:FormItem>
+		
+		<s:FormItem label="User group mapping attribute:" includeIn="customConfigGroup">
+			<s:TextInput id="userGroupMappingAttr" />
+		</s:FormItem>
+	</s:Form>
+	
+</component:BasicWidget>
